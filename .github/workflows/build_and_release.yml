@@ -34,8 +34,9 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: build-artifact
-
+  
       - name: Create Release
+        id: create_release    # ← 這行很重要！
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -45,13 +46,13 @@ jobs:
           body: ${{ github.event.inputs.note }}
           draft: false
           prerelease: false
-
+  
       - name: Upload Asset
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          upload_url: ${{ steps.create_release.outputs.upload_url }}  # ← 現在就能讀到了
           asset_path: ./build.zip
           asset_name: build.zip
           asset_content_type: application/zip
