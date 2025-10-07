@@ -1,31 +1,24 @@
 name: Multi-Stage Deployment Pipeline
 
 on:
-  workflow_dispatch:
+  push:
+    branches: [ main ]
 
 jobs:
-
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-
-      - name: Install & Build
-        run: |
-          npm ci
-          npm run build
-          zip -r build.zip .
-
+      - run: npm ci
+      - run: npm run build
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: build-artifact
-          path: build.zip
-
+          path: dist/
 
   deploy-dev:
     runs-on: ubuntu-latest
@@ -33,20 +26,17 @@ jobs:
     environment:
       name: dev
     steps:
-      - name: Download artifact
-        uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v4
         with:
           name: build-artifact
-
-      - name: Create Dev Release
+      - name: Release Dev Build
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG: ${{ vars.BUILD_TAG }}
           NOTE: ${{ vars.RELEASE_NOTE }}
         run: |
           echo "🚀 Deploying to DEV environment..."
-          gh release create "$TAG" build.zip --notes "$NOTE" || echo "⚠️ Release already exists, skipping."
-
+          gh release create "$TAG" dist/* --notes "$NOTE"
 
   deploy-staging:
     runs-on: ubuntu-latest
@@ -54,20 +44,17 @@ jobs:
     environment:
       name: staging
     steps:
-      - name: Download artifact
-        uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v4
         with:
           name: build-artifact
-
-      - name: Create Staging Release
+      - name: Release Staging Build
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG: ${{ vars.BUILD_TAG }}
           NOTE: ${{ vars.RELEASE_NOTE }}
         run: |
           echo "🧪 Deploying to STAGING environment..."
-          gh release create "$TAG" build.zip --notes "$NOTE (Pre-production testing)" || echo "⚠️ Release already exists, skipping."
-
+          gh release create "$TAG" dist/* --notes "$NOTE (Pre-production Testing)"
 
   deploy-production:
     runs-on: ubuntu-latest
@@ -75,16 +62,14 @@ jobs:
     environment:
       name: production
     steps:
-      - name: Download artifact
-        uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v4
         with:
           name: build-artifact
-
-      - name: Create Production Release
+      - name: Release Production Build
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG: ${{ vars.BUILD_TAG }}
           NOTE: ${{ vars.RELEASE_NOTE }}
         run: |
           echo "🎉 Deploying to PRODUCTION environment..."
-          gh release create "$TAG" build.zip --notes "$NOTE (Final production release)" || echo "⚠️ Release already exists, skipping."
+          gh release create "$TAG" dist/* --notes "$NOTE (Final Production Release)"
