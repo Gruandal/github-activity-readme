@@ -1,10 +1,10 @@
 name: Multi-Stage Deployment Pipeline
 
 on:
-  push:
-    branches: [ main ]
+  workflow_dispatch:
 
 jobs:
+  # === 1. Build Job ===
   build:
     runs-on: ubuntu-latest
     steps:
@@ -12,64 +12,79 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - run: npm ci
-      - run: npm run build
+      - name: Install & Build
+        run: |
+          npm ci
+          npm run build
+          zip -r build.zip dist/
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: build-artifact
-          path: dist/
+          path: build.zip
 
+  # === 2. Deploy to Dev ===
   deploy-dev:
     runs-on: ubuntu-latest
     needs: build
     environment:
       name: dev
     steps:
-      - uses: actions/download-artifact@v4
+      - name: Download artifact
+        uses: actions/download-artifact@v4
         with:
           name: build-artifact
-      - name: Release Dev Build
+      - name: Create Dev Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG: ${{ vars.BUILD_TAG }}
           NOTE: ${{ vars.RELEASE_NOTE }}
         run: |
           echo "🚀 Deploying to DEV environment..."
-          gh release create "$TAG" dist/* --notes "$NOTE"
+          gh release delete "$TAG" -y || true
+          git push origin :refs/tags/"$TAG" || true
+          gh release create "$TAG" build.zip --notes "$NOTE (Development build)"
 
+  # === 3. Deploy to Staging ===
   deploy-staging:
     runs-on: ubuntu-latest
     needs: deploy-dev
     environment:
       name: staging
     steps:
-      - uses: actions/download-artifact@v4
+      - name: Download artifact
+        uses: actions/download-artifact@v4
         with:
           name: build-artifact
-      - name: Release Staging Build
+      - name: Create Staging Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG: ${{ vars.BUILD_TAG }}
           NOTE: ${{ vars.RELEASE_NOTE }}
         run: |
           echo "🧪 Deploying to STAGING environment..."
-          gh release create "$TAG" dist/* --notes "$NOTE (Pre-production Testing)"
+          gh release delete "$TAG" -y || true
+          git push origin :refs/tags/"$TAG" || true
+          gh release create "$TAG" build.zip --notes "$NOTE (Pre-production testing)"
 
+  # === 4. Deploy to Production ===
   deploy-production:
     runs-on: ubuntu-latest
     needs: deploy-staging
     environment:
       name: production
     steps:
-      - uses: actions/download-artifact@v4
+      - name: Download artifact
+        uses: actions/download-artifact@v4
         with:
           name: build-artifact
-      - name: Release Production Build
+      - name: Create Production Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG: ${{ vars.BUILD_TAG }}
           NOTE: ${{ vars.RELEASE_NOTE }}
         run: |
           echo "🎉 Deploying to PRODUCTION environment..."
-          gh release create "$TAG" dist/* --notes "$NOTE (Final Production Release)"
+          gh release delete "$TAG" -y || true
+          git push origin :refs/tags/"$TAG" || true
+          gh release create "$TAG" build.zip --notes "$NOTE (Final production release)"
