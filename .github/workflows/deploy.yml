@@ -3,8 +3,11 @@ name: Multi-Stage Deployment Pipeline
 on:
   workflow_dispatch:
 
+permissions:
+  contents: write  # 允許建立與刪除 release、tag
+
 jobs:
-  # === 1. Build Job ===
+  # === 1️⃣ Build Job ===
   build:
     runs-on: ubuntu-latest
     steps:
@@ -23,40 +26,49 @@ jobs:
           name: build-artifact
           path: build.zip
 
-  # === 2. Deploy to Dev ===
+  # === 2️⃣ Deploy to Dev ===
   deploy-dev:
     runs-on: ubuntu-latest
     needs: build
     environment:
       name: dev
     steps:
+      - name: Install GitHub CLI
+        run: sudo apt-get install -y gh
+
       - name: Download artifact
         uses: actions/download-artifact@v4
         with:
           name: build-artifact
-      - name: Create Dev Release
+
+      - name: Release Dev Build
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG: ${{ vars.BUILD_TAG }}
           NOTE: ${{ vars.RELEASE_NOTE }}
         run: |
           echo "🚀 Deploying to DEV environment..."
+          if [ -z "$TAG" ]; then echo "❌ Missing BUILD_TAG in environment vars"; exit 1; fi
           gh release delete "$TAG" -y || true
           git push origin :refs/tags/"$TAG" || true
           gh release create "$TAG" build.zip --notes "$NOTE (Development build)"
 
-  # === 3. Deploy to Staging ===
+  # === 3️⃣ Deploy to Staging ===
   deploy-staging:
     runs-on: ubuntu-latest
     needs: deploy-dev
     environment:
       name: staging
     steps:
+      - name: Install GitHub CLI
+        run: sudo apt-get install -y gh
+
       - name: Download artifact
         uses: actions/download-artifact@v4
         with:
           name: build-artifact
-      - name: Create Staging Release
+
+      - name: Release Staging Build
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG: ${{ vars.BUILD_TAG }}
@@ -67,24 +79,15 @@ jobs:
           git push origin :refs/tags/"$TAG" || true
           gh release create "$TAG" build.zip --notes "$NOTE (Pre-production testing)"
 
-  # === 4. Deploy to Production ===
+  # === 4️⃣ Deploy to Production ===
   deploy-production:
     runs-on: ubuntu-latest
     needs: deploy-staging
     environment:
       name: production
     steps:
+      - name: Install GitHub CLI
+        run: sudo apt-get install -y gh
+
       - name: Download artifact
         uses: actions/download-artifact@v4
-        with:
-          name: build-artifact
-      - name: Create Production Release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG: ${{ vars.BUILD_TAG }}
-          NOTE: ${{ vars.RELEASE_NOTE }}
-        run: |
-          echo "🎉 Deploying to PRODUCTION environment..."
-          gh release delete "$TAG" -y || true
-          git push origin :refs/tags/"$TAG" || true
-          gh release create "$TAG" build.zip --notes "$NOTE (Final production release)"
