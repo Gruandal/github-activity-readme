@@ -9,7 +9,7 @@
   "scripts": {
     "format:check": "prettier --check index.js",
     "format": "prettier --write index.js",
-    "build": "ncc build index.js -o dist"
+    "build": "ncc build index.js -o dist",
     "test:unit": "node tests/unit.sample.test.js",
     "test:integration": "node tests/integration.sample.test.js"
   },
