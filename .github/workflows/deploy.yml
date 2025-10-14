@@ -37,19 +37,28 @@ jobs:
           name: build-artifact
           path: build.zip
 
-  # === ✅ 2. Unit tests ===
+  # === ✅ 1.1 Unit tests ===
   test-unit:
     needs: build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: 20 }
+        with:
+          node-version: 20
       - run: npm ci || npm i
+
+      # ⬇️ 故意讓測試失敗（只在你勾選時）
+      - name: Fail on purpose (demo)
+        if: ${{ github.event.inputs.force_fail == 'true' }}
+        run: |
+          echo "❌ Forcing unit test failure for demo"; exit 1
+
       - name: Run unit tests
         run: npm run test:unit
 
-  # === ✅ 3. Integration tests (runs on built artifact) ===
+
+  # === ✅ 1.2 Integration tests (runs on built artifact) ===
   test-integration:
     needs: test-unit
     runs-on: ubuntu-latest
