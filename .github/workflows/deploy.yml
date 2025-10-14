@@ -6,7 +6,7 @@ on:
       force_fail:
         description: "Fail tests on purpose (demo the gate)?"
         required: false
-        default: "false"
+        default: "true"
         
 permissions:
   contents: write
