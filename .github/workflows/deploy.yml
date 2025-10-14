@@ -2,7 +2,12 @@ name: CI/CD Deployment Pipeline
 
 on:
   workflow_dispatch:
-
+    inputs:
+      force_fail:
+        description: "Fail tests on purpose (demo the gate)?"
+        required: false
+        default: "false"
+        
 permissions:
   contents: write
 
