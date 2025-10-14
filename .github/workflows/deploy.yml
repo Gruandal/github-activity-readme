@@ -46,22 +46,22 @@ jobs:
 
   # === ✅ 3. Integration tests (runs on built artifact) ===
   test-integration:
-  needs: test-unit
-  runs-on: ubuntu-latest
-  steps:
-    - uses: actions/checkout@v4               # ⬅️ 需要這個，npm 才找得到 package.json
-    - uses: actions/download-artifact@v4
-      with:
-        name: build-artifact
-        path: .                                # 下載到當前目錄
-    - name: Normalize artifact path (optional but safe)
-      run: |
-        if [ -f build-artifact/build.zip ]; then mv build-artifact/build.zip .; fi
-        ls -lah
-    - uses: actions/setup-node@v4
-      with: { node-version: 20 }
-    - name: Run integration tests on build.zip
-      run: npm run test:integration
+    needs: test-unit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4               # ⬅️ 需要這個，npm 才找得到 package.json
+      - uses: actions/download-artifact@v4
+        with:
+          name: build-artifact
+          path: .                                # 下載到當前目錄
+      - name: Normalize artifact path (optional but safe)
+        run: |
+          if [ -f build-artifact/build.zip ]; then mv build-artifact/build.zip .; fi
+          ls -lah
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - name: Run integration tests on build.zip
+        run: npm run test:integration
 
 
   # === 🚀 2. Deploy to Dev ===
