@@ -1,14 +1,16 @@
 // 整合測試：驗證 build 產物存在（你的 build 步驟會產生 build.zip）
 const fs = require('fs');
-const path = 'build.zip';
 
-if (!fs.existsSync(path)) {
-  console.error('❌ Integration: build.zip not found');
+const candidates = ['build.zip', 'build-artifact/build.zip'];
+const found = candidates.find(p => fs.existsSync(p));
+
+if (!found) {
+  console.error('❌ Integration: build.zip not found in expected locations');
   process.exit(1);
 }
-const bytes = fs.statSync(path).size;
+const bytes = fs.statSync(found).size;
 if (bytes <= 0) {
-  console.error('❌ Integration: build.zip is empty');
+  console.error(`❌ Integration: ${found} is empty`);
   process.exit(1);
 }
-console.log(`✅ Integration: build.zip present (${bytes} bytes)`);
+console.log(`✅ Integration: ${found} present (${bytes} bytes)`);
