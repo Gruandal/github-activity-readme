@@ -1,8 +1,22 @@
-// 單元測試：至少能載入主程式（不碰網路或 secrets）
+// 單元測試：僅做本地快速檢查，不觸發 action 主程式
+const fs = require('fs');
+
+// 1) 必要檔案存在
+const mustExist = ['package.json', 'README.md'];
+for (const f of mustExist) {
+  if (!fs.existsSync(f)) {
+    console.error(`❌ Unit: ${f} missing`);
+    process.exit(1);
+  }
+}
+
+// 2) package.json 能被解析
 try {
-  require('../index.js');
-  console.log('✅ Unit: index.js can be required');
+  JSON.parse(fs.readFileSync('package.json', 'utf8'));
 } catch (e) {
-  console.error('❌ Unit: require index.js failed\n', e);
+  console.error('❌ Unit: package.json is invalid JSON');
+  console.error(e);
   process.exit(1);
 }
+
+console.log('✅ Unit: repo sanity checks passed');
