@@ -10,6 +10,8 @@
     "format:check": "prettier --check index.js",
     "format": "prettier --write index.js",
     "build": "ncc build index.js -o dist"
+    "test:unit": "node tests/unit.sample.test.js",
+    "test:integration": "node tests/integration.sample.test.js"
   },
   "dependencies": {
     "@actions/core": "^1.11.1",
@@ -18,10 +20,5 @@
   "devDependencies": {
     "@vercel/ncc": "^0.38.3",
     "prettier": "^3.4.2"
-  }
-  
-  "scripts": {
-  "test:unit": "node tests/unit.sample.test.js",
-  "test:integration": "node tests/integration.sample.test.js"
   }
 }
