@@ -112,6 +112,8 @@ jobs:
     needs: deploy-dev
     runs-on: ubuntu-latest
     environment: staging
+    env:
+      TEST_ENV: staging
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -141,6 +143,8 @@ jobs:
     needs: deploy-staging
     runs-on: ubuntu-latest
     environment: production
+    env:
+      TEST_ENV: prod
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
