@@ -19,4 +19,9 @@
     "@vercel/ncc": "^0.38.3",
     "prettier": "^3.4.2"
   }
+  
+  "scripts": {
+  "test:unit": "node tests/unit.sample.test.js",
+  "test:integration": "node tests/integration.sample.test.js"
+  }
 }
