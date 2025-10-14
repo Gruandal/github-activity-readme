@@ -32,9 +32,33 @@ jobs:
           name: build-artifact
           path: build.zip
 
+  # === ✅ 2. Unit tests ===
+  test-unit:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - run: npm ci || npm i
+      - name: Run unit tests
+        run: npm run test:unit
+
+  # === ✅ 3. Integration tests (runs on built artifact) ===
+  test-integration:
+    needs: test-unit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with: { name: build-artifact }
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - name: Run integration tests on build.zip
+        run: npm run test:integration
+
   # === 🚀 2. Deploy to Dev ===
   deploy-dev:
-    needs: build
+    needs: test-integration
     runs-on: ubuntu-latest
     environment: dev
     steps:
